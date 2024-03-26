@@ -1,0 +1,453 @@
+#include <iostream>
+#include <algorithm>
+#include <cctype>
+#include <cmath>
+#include <iomanip>
+#include <cstring>
+using namespace std;
+
+int MaximumProducts=50;//50 Was Given But using the size of 5 for the sake of simplicity
+
+//DECLARING FUNCTIONS
+void Input(string ProductName[],double Price[],int Quantity[],string Type[],int SalesRecord[]);
+void DisplayProducts(string ProductNames[], double Price[], int Quantity[], string Type[]);
+void AddProduct(string ProductName[],double Price[],int Quantities[],string Types[],int SalesRecord[]);
+void RemoveProduct(string ProductNames[],double Price[],int Quantity[],string Type[],int SalesRecord[]);
+bool UpdateStock(string ProductNames[],int ProductID,int NewQuantity,int Quantity);
+bool SearchProduct(string ProductNames[],int ProductID);
+void ListAllProducts(int ProductID,string ProductNames[],double Price[],int Quantity[],string Type[]);
+void GenerateInventoryReport(int ProductID, string ProductNames[], double Price[], int Quantity[], string Type[], double& TotalStock, int& MaxStock, int& MinStock);
+string CheckStockAvailAbility(string ProductNames[],int ProductID,int RequiredQuantity,int Quantity[]);
+void SortProducts(string ProductName[],int Quantity[],double Price[],int Choice);
+void GenerateBarChart(const int SalesRecord[], const string ProductNames[], int size);
+void SaleRecord(string ProductName[],int Quantity[],double Price[],int SalesRecord[]);
+
+int main()
+{
+	char Response='o';
+	do
+	{
+		int TaskNum=0;
+		cout<<setw(50)<<"                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~              "<<endl;
+		cout<<setw(50)<<"                 |   ~WELCOME TO INVENTORY MANAGEMENT SYSTEM~   | "<<endl;
+		cout<<setw(50)<<"                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~              "<<endl;
+		//MENU
+		cout<<"Press 1 To ADD A Product."<<endl;
+		cout<<"Press 2 To REMOVE A Product."<<endl;
+		cout<<"Press 3 To UPDATE A Stock."<<endl;
+		cout<<"Press 4 To SEARCH A Product."<<endl;
+		cout<<"Press 5 For The LIST OF PRODUCTS IN INVENTORY."<<endl;
+		cout<<"Press 6 To GENERATE AN INVENTORY REPORT."<<endl;
+		cout<<"Press 7 To Check the AVAILABILITY OF STOCK."<<endl;
+		cout<<"Press 8 To SORT THE PRODUCTS."<<endl;
+		cout<<"Press 9 For The GRAPHICAL REPRESENTATION of Sale Statistics."<<endl;
+		cout<<"Press 10 For The SALE RECORD."<<endl;
+		cin>>TaskNum;
+		
+		//ARRAYS DECLARATION
+		string ProductNames[MaximumProducts];
+		double Price[MaximumProducts];
+		int Quantity[MaximumProducts];
+		string Type[MaximumProducts];
+		int SalesRecord[MaximumProducts];
+		
+		Input(ProductNames,Price,Quantity,Type,SalesRecord);
+
+		switch(TaskNum)
+		{
+			case 1:
+			{
+            	AddProduct(ProductNames,Price,Quantity,Type,SalesRecord);
+            	DisplayProducts(ProductNames,Price,Quantity,Type);
+			}
+			break;
+
+			case 2:
+			{
+				DisplayProducts(ProductNames,Price,Quantity,Type);
+				RemoveProduct(ProductNames,Price,Quantity,Type,SalesRecord);
+				DisplayProducts(ProductNames,Price,Quantity,Type);
+			}
+			break;
+
+			case 3:
+			{
+				DisplayProducts(ProductNames,Price,Quantity,Type);
+				int ProductID;
+				int NewQuantity;
+				int Quantity;
+				cout<<"Enter The Product ID: "<<endl;
+				cin>>ProductID;
+				cout<<"Enter The New Stock Level: "<<endl;
+				cin>>NewQuantity;
+				bool Status=UpdateStock(ProductNames,ProductID,NewQuantity,Quantity);
+				if(Status)
+				{
+					cout<<"STOCK UPDATED SUCCESSFULLY."<<endl;
+				}
+				else
+				{
+					cout<<"PRODUCT NOT FOUND."<<endl;
+				}
+			}
+			break;
+
+			case 4:
+			{
+				DisplayProducts(ProductNames,Price,Quantity,Type);
+				int ProductID;
+				cout<<"Enter Product ID: "<<endl;
+				cin>>ProductID;
+				bool Status=SearchProduct(ProductNames,ProductID);
+				if(Status)
+				{
+					cout<<"PRODUCT FOUND."<<endl;
+					cout<<"The Product Is: "<<ProductNames<<endl;
+				}
+				else
+				{
+					cout<<"PRODUCT NOT FOUND."<<endl;
+				}
+			}
+			break;
+
+			case 5:
+			{
+				int ProductID;
+				ListAllProducts(ProductID,ProductNames,Price,Quantity,Type);
+			}
+			break;
+
+			case 6:
+			{
+				int ProductID;
+				double TotalStock=0.0;
+				int MaxStock;
+				int MinStock;
+				GenerateInventoryReport(ProductID,ProductNames,Price,Quantity,Type,TotalStock,MaxStock,MinStock);
+				DisplayProducts(ProductNames,Price,Quantity,Type);
+
+			}
+			break;
+
+			case 7:
+			{
+				int ProductID;
+				int RequiredQuantity;
+				cout<<"Enter Product ID: "<<endl;
+				cin>>ProductID;
+				cout<<"Enter The Required Quantity: "<<endl;
+				cin>>RequiredQuantity;
+				DisplayProducts(ProductNames,Price,Quantity,Type);
+				cout<<CheckStockAvailAbility(ProductNames,ProductID,RequiredQuantity,Quantity)<<endl;
+			}
+			break;
+
+			case 8:
+			{
+				int Choice;
+				DisplayProducts(ProductNames,Price,Quantity,Type);
+				SortProducts(ProductNames,Quantity,Price,Choice);
+				DisplayProducts(ProductNames,Price,Quantity,Type);
+			}
+			break;
+
+			case 9:
+			{
+				int size;
+				GenerateBarChart(SalesRecord,ProductNames,size);
+			}
+			break;
+
+			case 10:
+			{
+				DisplayProducts(ProductNames,Price,Quantity,Type);
+				SaleRecord(ProductNames,Quantity,Price,SalesRecord);
+				DisplayProducts(ProductNames,Price,Quantity,Type);
+			}
+			break;
+
+			default:
+			{
+				cout<<"WRONG SELECTION !!!"<<endl;
+				cout<<"ENTER AN EXISTING TASK."<<endl;
+			}
+			break;
+		}
+		cout<<endl;
+		cout<<"DO YOU WANT TO REPEAT ???"<<endl;
+		cin>>Response;
+	}
+	while(Response=='Y'||Response=='y');
+}
+//FUNCTION FOR INPUTTING
+void Input(string ProductName[],double Price[],int Quantity[],string Type[],int SalesRecord[])
+{
+	for(int i=0;i<MaximumProducts;i++)
+	{
+		cout<<"Enter The Name Of Product"<<endl<<i+1<<" ";
+		cin>>ProductName[i];
+		cout<<"Enter The Price Of Product."<<endl<<i+1<<" ";
+		cin>>Price[i];
+		cout<<"Which Type Of Product Is This??? (Frozen,Dessert,Regular,Fragile)"<<endl<<i+1<<" ";
+		cin>>Type[i];
+
+	}
+}
+//FUNCTION TO DISPLAY
+void DisplayProducts(string ProductNames[], double Price[], int Quantity[], string Type[])
+{
+    cout << "ProductID | ProductNames | Price | Quantity | TypeOfProduct" << endl;
+    for (int i = 0; i < MaximumProducts; i++)
+    {
+        if (!ProductNames[i].empty())
+        {
+            cout << i + 1 << " | " << ProductNames[i] << " | " << Price[i] << " | " << Quantity[i] << " | " << Type[i] << endl;
+        }
+    }
+}
+//FUNCTION FOR ADDING PRODUCT
+void AddProduct(string ProductNames[],double Price[],int Quantity[],string Type[],int SalesRecord[])
+{
+	for (int i=0;i<MaximumProducts;i++)
+	{
+		if(ProductNames[i].empty())//Write Name If Array Is Empty
+		{
+			cout<<"Enter Product Name."<<endl;
+			cin>>ProductNames[i];
+			cout<<"Enter Quantity."<<endl;
+			cin>>Quantity[i];
+			cout<<"Enter The Type Of Product.(Frozen,DessertRegular,Fragile)"<<endl;
+			cin>>Type[i];
+			SalesRecord[i]=0;
+			cout<<"PRODUCT ADDED SUCCESFULLY TO INVENTORY"<<endl;//Product Added
+			return;
+		}
+	}
+	cout<<"INVENTORY FULL !!!"<<endl;
+	cout<<"Can Not Add More Products !!!"<<endl;
+	cout<<endl;
+}
+//FUNCTION TO REMOVE A PRODUCT
+void RemoveProduct(string ProductNames[],double Price[],int Quantity[],string Type[],int SalesRecord[])
+{
+    int ProductID;
+    cout<<"Enter Product ID To Remove That Product."<<endl;
+    cin>>ProductID;
+    if(ProductID>=1&&ProductID<=MaximumProducts)
+	{
+        int position=ProductID-1;
+        ProductNames[position]=" ";
+        Price[position]=0.0;
+        Quantity[position]=0;
+        Type[position]=" ";
+        SalesRecord[position]=0;
+        cout<<"PRODUCT REMOVED SUCCESSFULLY."<<endl;
+    }
+    else
+	{
+        cout<<"Product Not Found."<<endl;
+    }
+}
+//FUNCTON FOR UPDATING THE STOCK
+bool UpdateStock(string ProductNames[],int ProductID,int NewQuantity,int Quantity)
+{
+    for (int i=0;i<MaximumProducts;i++)
+    {
+        if(!ProductNames[i].empty()&&ProductID==i+1)
+        {
+            Quantity=NewQuantity;
+            return true;//Stock IS Updated
+        }
+    }
+    return false;// Not Updated because Product not Found
+}
+//FUNCTION FOR SEARCHING PRODUCT
+bool SearchProduct(string ProductNames[],int ProductID)
+{
+	for(int i=0;i<MaximumProducts;i++)
+	{
+		if(!ProductNames[i].empty()&&ProductID==i+1)
+		{
+			return 1;//Product Found
+		}
+	}
+	return 0;//Product Not Found
+}
+//FUNCTION TO LIST ALL THE PRODUCTS
+void ListAllProducts(int ProductID,string ProductNames[],double Price[],int Quantity[],string Type[])
+{
+	cout<<"ProductID | ProductNames | Price | Quantity | TypeOfProduct"<<endl;
+	for(int i=0;i<MaximumProducts;i++)
+	{
+		if (!ProductNames[i].empty())
+			{
+				cout<<i+1<<"	|	"<<ProductNames[i]<<"	|	"<<Price[i]<<"	|	"<<Quantity[i]<<"	|	"<<Type<<endl;
+			}
+	}
+}
+//FUNCTION FOR GENERATING INVENTORY REPORT
+void GenerateInventoryReport(int ProductID, string ProductNames[], double Price[], int Quantity[], string Type[], double& TotalStock, int& MaxStock, int& MinStock)
+{
+    TotalStock=0.0;
+    MaxStock=0;
+    MinStock=0;
+    for(int i=0;i<MaximumProducts;i++)
+    {
+        if (!ProductNames[i].empty())
+        {
+            TotalStock+=Price[i]*Quantity[i];
+            if(Quantity[i]>Quantity[MaxStock])
+            {
+                MaxStock=i;
+            }
+            if(Quantity[i]<Quantity[MinStock])
+            {
+                MinStock=i;
+            }
+        }
+    }
+}
+//FUNCTION FOR CHECKING THE AVAILABILITY OF STOCK
+string CheckStockAvailAbility(string ProductNames[],int ProductID,int RequiredQuantity,int Quantity[])
+{
+	for(int i=0;i<MaximumProducts;i++)
+	{
+		if(!ProductNames[i].empty()&&ProductID==i+1)
+		{
+			if(Quantity[i]==0) //using if else to check the availability of stock
+			{
+				cout<<"OUT OF STOCK !!!"<<endl;
+			}else if(Quantity[i]<RequiredQuantity)
+			{
+				cout<<"STOCK LOWER THEN REQUIRED."<<endl;
+			}else
+			{
+				cout<<"STOCK AVAILABLE"<<endl;
+			}
+		}
+	}
+}
+//FUNCTION FOR THE SORTING OF PRODUCTS
+void SortProducts(string ProductName[],int Quantity[],double Price[],int Choice)
+{
+    char Response='o';
+    cout<<"MENU FOR SORTING OF PRODUCTS."<<endl;
+    cout<<endl;
+    cout<<"Press 1 To Sort Products By Name."<<endl;
+    cout<<"Press 2 To Sort Products By Quantity."<<endl;
+    cout<<"Press 3 To Sort Products By Price."<<endl;
+    cout<<"What Type Of Sorting Do You Want ???"<<endl;
+    cin>>Choice;
+    do
+    {
+        switch (Choice)
+        {
+        case 1:
+        {
+            for(int i=0;i<MaximumProducts;i++)
+            {
+                for(int j=0;j<MaximumProducts-i-1;j++)
+                {
+                    if(ProductName[j]>ProductName[j+1])
+                    {
+                        swap(ProductName[j],ProductName[j+1]);
+                        swap(Price[j],Price[j+1]);
+                        swap(Quantity[j],Quantity[j+1]);
+                    }
+                }
+            }
+        }
+        break;
+        case 2:
+        {
+            for(int i=0;i<MaximumProducts;i++)
+            {
+                for(int j=0;j<MaximumProducts-i-1;j++)
+                {
+                    if(Quantity[j]>Quantity[j+1])
+                    {
+                        swap(ProductName[j],ProductName[j+1]);
+                        swap(Price[j],Price[j+1]);
+                        swap(Quantity[j],Quantity[j+1]);
+                    }
+                }
+            }
+        }
+        break;
+        case 3:
+        {
+            for(int i=0;i<MaximumProducts;i++)
+            {
+                for(int j=0;j<MaximumProducts-i-1;j++)
+                {
+                    if(Price[j]>Price[j+1])
+                    {
+                        swap(ProductName[j],ProductName[j+1]);
+                        swap(Price[j],Price[j+1]);
+                        swap(Quantity[j],Quantity[j+1]);
+                    }
+                }
+            }
+        }
+        break;
+        default:
+        {
+            cout<<"INVALID CHOICE !!!"<<endl;
+        }
+        }
+        cout<<"Do You Want To Sort Any Product Again ???"<<endl;
+        cin>>Response;
+    } 
+	while(Response=='Y'||Response=='y');
+}
+// GRAPHICAL FUNCTION
+void GenerateBarChart(const int SalesRecord[], const string ProductNames[], int size)
+{
+   int bar_width = 25;
+
+    // Find the maximum sales record
+    int maxSalesRecord = *max_element(SalesRecord, SalesRecord + size);
+
+    for (int i = 0; i < size; i++)
+    {
+        cout << setw(5) << ProductNames[i] << setw(5) << SalesRecord[i] << "|";
+
+        // Calculate the bar length based on the proportion of the maximum sales record
+        int bar_length = static_cast<int>(static_cast<double>(SalesRecord[i]) / maxSalesRecord * bar_width);
+
+        for (int j = 0; j < bar_length; j++)
+        {
+            cout << "*";
+        }
+        cout << endl;
+    }
+
+}
+//FUNCTION TO GET THE SALE RECORD
+void SaleRecord(string ProductNames[],int Quantity[],double Price[],int SalesRecord[])
+{
+	int ProductID;
+	int QuantitySold;
+	cout<<"Enter The Product ID for Sale: "<<endl;
+	cin>>ProductID;
+	cout<<"Enter Quantity Sold: "<<endl;
+	cin>>QuantitySold;
+	for(int i=0;i<MaximumProducts;i++)
+	{
+		if(!ProductNames[i].empty()&&ProductID==i+1)
+		{
+			if(Quantity[i]>=QuantitySold)
+			{
+				Quantity[i]-=QuantitySold;
+				SalesRecord[i]+=QuantitySold;
+				cout<<"Sale Recorded Successfully."<<endl; 
+			}else
+			{
+				cout<<"Insufficient Stock For Sale !!!"<<endl;
+			}
+			return;
+		}	
+	}
+	cout<<"Product Not Found !!!"<<endl;
+}
